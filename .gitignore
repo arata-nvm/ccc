@@ -1,0 +1,9 @@
+*~
+*.o
+tmp*
+a.out
+chibicc
+
+/.idea
+/cmake-build-debug
+CMakeLists.txt
