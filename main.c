@@ -147,6 +147,7 @@ static Node *new_num(int val) {
 
 static Node *expr(void);
 static Node *mul(void);
+static Node *unary(void);
 static Node *primary(void);
 
 static Node *expr(void) {
@@ -162,15 +163,23 @@ static Node *expr(void) {
 }
 
 static Node *mul(void) {
-  Node *node = primary();
+  Node *node = unary();
   for (;;) {
     if (consume('*'))
-      node = new_binary(ND_MUL, node, primary());
+      node = new_binary(ND_MUL, node, unary());
     else if (consume('/'))
-      node = new_binary(ND_DIV, node, primary());
+      node = new_binary(ND_DIV, node, unary());
     else
       return node;
   }
+}
+
+static Node *unary(void) {
+  if (consume('+'))
+    return unary();
+  if (consume('-'))
+    return new_binary(ND_SUB, new_num(0), unary());
+  return primary();
 }
 
 static Node *primary(void) {
