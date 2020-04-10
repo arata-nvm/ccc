@@ -45,6 +45,7 @@ typedef enum {
   ND_LT,
   ND_LE,
   ND_RETURN,
+  ND_EXPR_STMT,
   ND_NUM,
 } NodeKind;
 
