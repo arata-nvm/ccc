@@ -60,6 +60,7 @@ typedef enum {
   ND_WHILE,
   ND_FOR,
   ND_BLOCK,
+  ND_FUNCALL,
   ND_EXPR_STMT,
   ND_VAR,
   ND_NUM,
@@ -80,6 +81,8 @@ struct Node {
   Node *inc;
 
   Node *body;
+
+  char *funcname;
 
   Var *var;
   long val;
