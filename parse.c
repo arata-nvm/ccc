@@ -124,6 +124,20 @@ static Node *stmt(void) {
     return node;
   }
 
+  if (consume("{")) {
+    Node head = {};
+    Node *cur = &head;
+
+    while (!consume("}")) {
+      cur->next = stmt();
+      cur = cur->next;
+    }
+
+    Node *node = new_node(ND_BLOCK);
+    node->body = head.next;
+    return node;
+  }
+
   Node *node = read_expr_stmt();
   expect(";");
   return node;
