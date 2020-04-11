@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -37,6 +38,13 @@ extern Token *token;
 
 // parse.c
 
+typedef struct Var Var;
+struct Var {
+  Var *next;
+  char *name;
+  int offset;
+};
+
 typedef enum {
   ND_ADD,
   ND_SUB,
@@ -59,12 +67,19 @@ struct Node {
   Node *next;
   Node *lhs;
   Node *rhs;
-  char name;
+  Var *var;
   long val;
 };
 
-Node *program(void);
+typedef struct Function Function;
+struct Function {
+  Node *node;
+  Var *locals;
+  int stack_size;
+};
+
+Function *program(void);
 
 // codegen.c
 
-void codegen(Node *node);
+void codegen(Function *prog);

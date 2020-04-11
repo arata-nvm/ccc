@@ -47,7 +47,7 @@ void expect(char *op) {
   token = token->next;
 }
 
-long expect_number() {
+long expect_number(void) {
   if (token->kind != TK_NUM)
     error_at(token->str, "expected a number");
   int val = token->val;
@@ -55,7 +55,7 @@ long expect_number() {
   return val;
 }
 
-bool at_eof() { return token->kind == TK_EOF; }
+bool at_eof(void) { return token->kind == TK_EOF; }
 
 static Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
   Token *tok = calloc(1, sizeof(Token));
@@ -78,8 +78,7 @@ static bool is_alnum(char c) { return is_alpha(c) || ('0' <= c && c <= '9'); }
 
 Token *tokenize(void) {
   char *p = user_input;
-  Token head;
-  head.next = NULL;
+  Token head = {};
   Token *cur = &head;
 
   while (*p) {
@@ -94,8 +93,11 @@ Token *tokenize(void) {
       continue;
     }
 
-    if ('a' <= *p && *p <= 'z') {
-      cur = new_token(TK_IDENT, cur, p++, 1);
+    if (is_alpha(*p)) {
+      char *q = p++;
+      while (is_alnum(*p))
+        p++;
+      cur = new_token(TK_IDENT, cur, q, p - q);
       continue;
     }
 
