@@ -1,6 +1,7 @@
 #include "chibi.h"
 
 static int labelseq = 1;
+static char *argreg[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
 static void gen_addr(Node *node) {
   if (node->kind == ND_VAR) {
@@ -99,10 +100,20 @@ static void gen(Node *node) {
     for (Node *n = node->body; n; n = n->next)
       gen(n);
     return;
-  case ND_FUNCALL:
+  case ND_FUNCALL: {
+    int nargs = 0;
+    for (Node *arg = node->args; arg; arg = arg->next) {
+      gen(arg);
+      nargs++;
+    }
+
+    for (int i = nargs - 1; i >= 0; i--)
+      printf("  pop %s\n", argreg[i]);
+
     printf("  call %s\n", node->funcname);
     printf("  push rax\n");
     return;
+  }
   case ND_RETURN:
     gen(node->lhs);
     printf("  pop rax\n");
