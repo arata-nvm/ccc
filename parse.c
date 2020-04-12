@@ -383,13 +383,20 @@ static Node *func_args(void) {
 }
 
 static Node *primary(void) {
+  Token *tok;
+
   if (consume("(")) {
     Node *node = expr();
     expect(")");
     return node;
   }
 
-  Token *tok;
+  if (tok = consume("sizeof")) {
+    Node *node = unary();
+    add_type(node);
+    return new_num(node->ty->size, tok);
+  }
+
   if (tok = consume_ident()) {
     if (consume("(")) {
       Node *node = new_node(ND_FUNCALL, tok);
