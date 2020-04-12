@@ -566,6 +566,12 @@ static Node *postfix(void) {
       continue;
     }
 
+    if (tok = consume("->")) {
+      node = new_unary(ND_DEREF, node, tok);
+      node = struct_ref(node);
+      continue;
+    }
+
     return node;
   }
 }
