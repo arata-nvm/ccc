@@ -1,6 +1,7 @@
 #define _GNU_SOURCE
 #include <assert.h>
 #include <ctype.h>
+#include <errno.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -43,6 +44,7 @@ char *expect_ident(void);
 bool at_eof(void);
 Token *tokenize(void);
 
+extern char *filename;
 extern char *user_input;
 extern Token *token;
 
