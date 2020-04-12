@@ -88,6 +88,7 @@ typedef enum {
   ND_BLOCK,
   ND_FUNCALL,
   ND_EXPR_STMT,
+  ND_STMT_EXPR,
   ND_VAR,
   ND_NUM,
   ND_NULL,

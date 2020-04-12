@@ -433,6 +433,23 @@ static Node *postfix(void) {
   return node;
 }
 
+static Node *stmt_expr(Token *tok) {
+  Node *node = new_node(ND_STMT_EXPR, tok);
+  node->body = stmt();
+  Node *cur = node->body;
+
+  while (!consume("}")) {
+    cur->next = stmt();
+    cur = cur->next;
+  }
+  expect(")");
+
+  if (cur->kind != ND_EXPR_STMT)
+    error_tok(cur->tok, "stmt expr returning void is not supported");
+  memcpy(cur, cur->lhs, sizeof(Node));
+  return node;
+}
+
 static Node *func_args(void) {
   if (consume(")"))
     return NULL;
@@ -450,7 +467,10 @@ static Node *func_args(void) {
 static Node *primary(void) {
   Token *tok;
 
-  if (consume("(")) {
+  if (tok = consume("(")) {
+    if (consume("{"))
+      return stmt_expr(tok);
+
     Node *node = expr();
     expect(")");
     return node;
