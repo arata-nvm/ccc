@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct Type Type;
+
 // tokenize.c
 
 typedef enum {
@@ -54,7 +56,10 @@ struct VarList {
 
 typedef enum {
   ND_ADD,
+  ND_PTR_ADD,
   ND_SUB,
+  ND_PTR_SUB,
+  ND_PTR_DIFF,
   ND_MUL,
   ND_DIV,
   ND_EQ,
@@ -79,6 +84,7 @@ typedef struct Node Node;
 struct Node {
   NodeKind kind;
   Node *next;
+  Type *ty;
   Token *tok;
 
   Node *lhs;
@@ -111,6 +117,21 @@ struct Function {
 };
 
 Function *program(void);
+
+// typing.c
+
+typedef enum {
+  TY_INT,
+  TY_PTR
+} TypeKind;
+
+struct Type {
+  TypeKind kind;
+  Type *base;
+};
+
+bool is_integer(Type *ty);
+void add_type(Node *node);
 
 // codegen.c
 
