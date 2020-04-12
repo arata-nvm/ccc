@@ -44,9 +44,11 @@ static Node *new_var_node(Var *var, Token *tok) {
   return node;
 }
 
-static Var *new_lvar(char *name) {
+static Var *new_lvar(char *name, Type *ty) {
   Var *var = calloc(1, sizeof(Var));
   var->name = name;
+  var->ty = ty;
+
   VarList *vl = calloc(1, sizeof(VarList));
   vl->var = var;
   vl->next = locals;
@@ -55,6 +57,7 @@ static Var *new_lvar(char *name) {
 }
 
 static Function *function(void);
+static Node *declaration(void);
 static Node *stmt(void);
 static Node *stmt2(void);
 static Node *expr(void);
@@ -78,18 +81,31 @@ Function *program(void) {
   return head.next;
 }
 
+static Type *basetype(void) {
+  expect("int");
+  Type *ty = int_type;
+  while (consume("*"))
+    ty = pointer_to(ty);
+  return ty;
+}
+
+static VarList *read_func_param(void) {
+  VarList *vl = calloc(1, sizeof(VarList));
+  Type *ty = basetype();
+  vl->var = new_lvar(expect_ident(), ty);
+  return vl;
+}
+
 static VarList *read_func_params(void) {
   if (consume(")"))
     return NULL;
 
-  VarList *head = calloc(1, sizeof(VarList));
-  head->var = new_lvar(expect_ident());
+  VarList *head = read_func_param();
   VarList *cur = head;
 
   while (!consume(")")) {
     expect(",");
-    cur->next = calloc(1, sizeof(VarList));
-    cur->next->var = new_lvar(expect_ident());
+    cur->next = read_func_param();
     cur = cur->next;
   }
 
@@ -100,6 +116,7 @@ static Function *function(void) {
   locals = NULL;
 
   Function *fn = calloc(1, sizeof(Function));
+  basetype();
   fn->name = expect_ident();
   expect("(");
   fn->params = read_func_params();
@@ -115,6 +132,22 @@ static Function *function(void) {
   fn->node = head.next;
   fn->locals = locals;
   return fn;
+}
+
+static Node *declaration(void) {
+  Token *tok = token;
+  Type *ty = basetype();
+  Var *var = new_lvar(expect_ident(), ty);
+
+  if (consume(";"))
+    return new_node(ND_NULL, tok);
+
+  expect("=");
+  Node *lhs = new_var_node(var, tok);
+  Node *rhs = expr();
+  expect(";");
+  Node *node = new_binary(ND_ASSIGN, lhs, rhs, tok);
+  return new_unary(ND_EXPR_STMT, node, tok);
 }
 
 static Node *read_expr_stmt(void) {
@@ -188,6 +221,9 @@ static Node *stmt2(void) {
     node->body = head.next;
     return node;
   }
+
+  if (tok = peek("int"))
+    return declaration();
 
   Node *node = read_expr_stmt();
   expect(";");
@@ -336,7 +372,7 @@ static Node *primary(void) {
 
     Var *var = find_var(tok);
     if (!var) {
-      var = new_lvar(strndup(tok->str, tok->len));
+      error_tok(tok, "undefined variable");
     }
     return new_var_node(var, tok);
   }
