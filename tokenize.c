@@ -11,10 +11,7 @@ void error(char *fmt, ...) {
   exit(1);
 }
 
-void error_at(char *loc, char *fmt, ...) {
-  va_list ap;
-  va_start(ap, fmt);
-
+static void verror_at(char *loc, char *fmt, va_list ap) {
   int pos = loc - user_input;
   fprintf(stderr, "%s\n", user_input);
   fprintf(stderr, "%*s", pos, "");
@@ -24,12 +21,25 @@ void error_at(char *loc, char *fmt, ...) {
   exit(1);
 }
 
-bool consume(char *op) {
+void error_at(char *loc, char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  verror_at(loc, fmt, ap);
+}
+
+void error_tok(Token *tok, char *fmt, ...) {
+  va_list ap;
+  va_start(ap, fmt);
+  verror_at(tok->str, fmt, ap);
+}
+
+Token *consume(char *op) {
   if (token->kind != TK_RESERVED || strlen(op) != token->len ||
       strncmp(token->str, op, token->len))
-    return false;
+    return NULL;
+  Token *t = token;
   token = token->next;
-  return true;
+  return t;
 }
 
 Token *consume_ident(void) {
@@ -43,13 +53,13 @@ Token *consume_ident(void) {
 void expect(char *op) {
   if (token->kind != TK_RESERVED || strlen(op) != token->len ||
       strncmp(token->str, op, token->len))
-    error_at(token->str, "expected \"%s\"", op);
+    error_tok(token, "expected \"%s\"", op);
   token = token->next;
 }
 
 long expect_number(void) {
   if (token->kind != TK_NUM)
-    error_at(token->str, "expected a number");
+    error_tok(token, "expected a number");
   int val = token->val;
   token = token->next;
   return val;
@@ -57,7 +67,7 @@ long expect_number(void) {
 
 char *expect_ident(void) {
   if (token->kind != TK_IDENT)
-    error_at(token->str, "expected an identifier");
+    error_tok(token, "expected an identifier");
   char *s = strndup(token->str, token->len);
   token = token->next;
   return s;
