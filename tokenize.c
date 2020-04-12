@@ -202,6 +202,21 @@ Token *tokenize(void) {
       continue;
     }
 
+    if (startswith(p, "//")) {
+      p += 2;
+      while (*p != '\n')
+        p++;
+      continue;
+    }
+
+    if (startswith(p, "/*")) {
+      char *q = strstr(p + 2, "*/");
+      if (!q)
+        error_at(p, "unclosed block comment");
+      p = q + 2;
+      continue;
+    }
+
     if (*p == '"') {
       cur = read_string_literal(cur, p);
       p += cur->len;
