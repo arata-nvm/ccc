@@ -14,6 +14,7 @@ typedef struct Type Type;
 typedef enum {
   TK_RESERVED,
   TK_IDENT,
+  TK_STR,
   TK_NUM,
   TK_EOF,
 } TokenKind;
@@ -25,6 +26,9 @@ struct Token {
   int val;
   char *str;
   int len;
+
+  char *contents;
+  int cont_len;
 };
 
 void error(char *fmt, ...);
@@ -51,6 +55,9 @@ struct Var {
   bool is_local;
 
   int offset;
+
+  char *contents;
+  int cont_len;
 };
 
 typedef struct VarList VarList;
