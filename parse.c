@@ -194,8 +194,12 @@ static Type *basetype(void) {
   Type *ty;
   if (consume("char"))
     ty = char_type;
+  else if (consume("short"))
+    ty = short_type;
   else if (consume("int"))
     ty = int_type;
+  else if (consume("long"))
+    ty = long_type;
   else if (consume("struct"))
     ty = struct_decl();
   else
@@ -357,7 +361,8 @@ static Node *read_expr_stmt(void) {
 }
 
 static bool is_typename(void) {
-  return peek("char") || peek("int") || peek("struct") || find_typedef(token);
+  return peek("char") || peek("short") || peek("int") || peek("long") ||
+         peek("struct") || find_typedef(token);
 }
 
 static Node *stmt(void) {

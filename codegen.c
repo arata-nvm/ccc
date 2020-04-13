@@ -1,6 +1,7 @@
 #include "chibi.h"
 
 static char *argreg1[] = {"dil", "sil", "dl", "cl", "r8b", "r9b"};
+static char *argreg2[] = {"di", "si", "dx", "cx", "r8w", "r9w"};
 static char *argreg4[] = {"edi", "esi", "edx", "ecx", "r8d", "r9d"};
 static char *argreg8[] = {"rdi", "rsi", "rdx", "rcx", "r8", "r9"};
 
@@ -45,6 +46,8 @@ static void load(Type *ty) {
   printf("  pop rax\n");
   if (ty->size == 1)
     printf("  movsx rax, byte ptr [rax]\n");
+  else if (ty->size == 2)
+    printf("  movsx rax, word ptr [rax]\n");
   else if (ty->size == 4)
     printf("  movsxd rax, dword ptr [rax]\n");
   else {
@@ -60,6 +63,8 @@ static void store(Type *ty) {
 
   if (ty->size == 1)
     printf("  mov [rax], dil\n");
+  else if (ty->size == 2)
+    printf("  mov [rax], di\n");
   else if (ty->size == 4)
     printf("  mov [rax], edi\n");
   else {
@@ -268,11 +273,13 @@ static void emit_data(Program *prog) {
 
 static void load_arg(Var *var, int idx) {
   int sz = var->ty->size;
-  if (sz == 1) {
+  if (sz == 1)
     printf("  mov [rbp-%d], %s\n", var->offset, argreg1[idx]);
-  } else if (sz == 4) {
+  else if (sz == 2)
+    printf("  mov [rbp-%d], %s\n", var->offset, argreg2[idx]);
+  else if (sz == 4)
     printf("mov [rbp-%d], %s\n", var->offset, argreg4[idx]);
-  } else {
+  else {
     assert(sz == 8);
     printf("  mov [rbp-%d], %s\n", var->offset, argreg8[idx]);
   }
