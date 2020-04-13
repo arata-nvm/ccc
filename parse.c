@@ -113,14 +113,16 @@ static Var *new_lvar(char *name, Type *ty) {
   return var;
 }
 
-static Var *new_gvar(char *name, Type *ty) {
+static Var *new_gvar(char *name, Type *ty, bool emit) {
   Var *var = new_var(name, ty, false);
   push_scope(name)->var = var;
 
-  VarList *vl = calloc(1, sizeof(VarList));
-  vl->var = var;
-  vl->next = globals;
-  globals = vl;
+  if (emit) {
+    VarList *vl = calloc(1, sizeof(VarList));
+    vl->var = var;
+    vl->next = globals;
+    globals = vl;
+  }
   return var;
 }
 
@@ -330,7 +332,9 @@ static Function *function(void) {
 
   Type *ty = basetype();
   char *name = NULL;
-  declarator(ty, &name);
+  ty = declarator(ty, &name);
+
+  new_gvar(name, func_type(ty), false);
 
   Function *fn = calloc(1, sizeof(Function));
   fn->name = name;
@@ -364,7 +368,7 @@ static void global_var(void) {
   ty = declarator(ty, &name);
   ty = type_suffix(ty);
   expect(";");
-  new_gvar(name, ty);
+  new_gvar(name, ty, true);
 }
 
 static Node *declaration(void) {
@@ -703,6 +707,17 @@ static Node *primary(void) {
       Node *node = new_node(ND_FUNCALL, tok);
       node->funcname = strndup(tok->str, tok->len);
       node->args = func_args();
+      add_type(node);
+
+      VarScope *sc = find_var(tok);
+      if (sc) {
+        if (!sc->var || sc->var->ty->kind != TY_FUNC)
+          error_tok(tok, "not a function");
+        node->ty = sc->var->ty->return_ty;
+      } else {
+        warn_tok(node->tok, "implicit declaration of a function");
+        node->ty = int_type;
+      }
       return node;
     }
 
@@ -717,7 +732,7 @@ static Node *primary(void) {
     token = token->next;
 
     Type *ty = array_of(char_type, tok->cont_len);
-    Var *var = new_gvar(new_label(), ty);
+    Var *var = new_gvar(new_label(), ty, true);
     var->contents = tok->contents;
     var->cont_len = tok->cont_len;
     return new_var_node(var, tok);
