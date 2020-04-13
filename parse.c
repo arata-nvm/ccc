@@ -180,11 +180,14 @@ Program *program(void) {
 
   while (!at_eof()) {
     if (is_function()) {
-      cur->next = function();
+      Function *fn = function();
+      if (!fn)
+        continue;
+      cur->next = fn;
       cur = cur->next;
-    } else {
-      global_var();
+      continue;
     }
+    global_var();
   }
 
   Program *prog = calloc(1, sizeof(Program));
@@ -332,12 +335,18 @@ static Function *function(void) {
   Function *fn = calloc(1, sizeof(Function));
   fn->name = name;
   expect("(");
-  fn->params = read_func_params();
-  expect("{");
 
   Scope *sc = enter_scope();
+  fn->params = read_func_params();
+
+  if (consume(";")) {
+    leave_scope(sc);
+    return NULL;
+  }
+
   Node head = {};
   Node *cur = &head;
+  expect("{");
   while (!consume("}")) {
     cur->next = stmt();
     cur = cur->next;
