@@ -126,7 +126,7 @@ static bool is_alnum(char c) { return is_alpha(c) || ('0' <= c && c <= '9'); }
 static char *starts_with_reserved(char *p) {
   static char *kw[] = {"return", "if",   "else",   "while",  "for",
                        "int",    "char", "sizeof", "struct", "typedef",
-                       "short",  "long", "void"};
+                       "short",  "long", "void",   "_Bool"};
 
   for (int i = 0; i < sizeof(kw) / sizeof(*kw); i++) {
     int len = strlen(kw[i]);

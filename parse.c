@@ -204,15 +204,17 @@ static Type *basetype(void) {
 
   if (consume("void"))
     return void_type;
-  else if (consume("char"))
+  if (consume("_Bool"))
+    return bool_type;
+  if (consume("char"))
     return char_type;
-  else if (consume("short"))
+  if (consume("short"))
     return short_type;
-  else if (consume("int"))
+  if (consume("int"))
     return int_type;
-  else if (consume("long"))
+  if (consume("long"))
     return long_type;
-  else if (consume("struct"))
+  if (consume("struct"))
     return struct_decl();
   return find_var(consume_ident())->type_def;
 }
@@ -404,8 +406,8 @@ static Node *read_expr_stmt(void) {
 }
 
 static bool is_typename(void) {
-  return peek("void") || peek("char") || peek("short") || peek("int") ||
-         peek("long") || peek("struct") || find_typedef(token);
+  return peek("void") || peek("_Bool") || peek("char") || peek("short") ||
+         peek("int") || peek("long") || peek("struct") || find_typedef(token);
 }
 
 static Node *stmt(void) {
