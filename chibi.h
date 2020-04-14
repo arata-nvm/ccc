@@ -96,6 +96,7 @@ typedef enum {
   ND_STMT_EXPR,
   ND_VAR,
   ND_NUM,
+  ND_CAST,
   ND_NULL,
 } NodeKind;
 
