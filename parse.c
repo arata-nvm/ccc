@@ -4,8 +4,11 @@ typedef struct VarScope VarScope;
 struct VarScope {
   VarScope *next;
   char *name;
+
   Var *var;
   Type *type_def;
+  Type *enum_ty;
+  int enum_val;
 };
 
 typedef struct TagScope TagScope;
@@ -149,6 +152,7 @@ static Type *abstract_declarator(Type *ty);
 static Type *type_suffix(Type *ty);
 static Type *type_name(void);
 static Type *struct_decl(void);
+static Type *enum_specifier(void);
 static Member *struct_member(void);
 static void global_var(void);
 static Node *declaration(void);
@@ -239,6 +243,8 @@ static Type *basetype(bool *is_typedef) {
 
       if (peek("struct")) {
         ty = struct_decl();
+      } else if (peek("enum")) {
+        ty = enum_specifier();
       } else {
         ty = find_typedef(token);
         assert(ty);
@@ -355,6 +361,8 @@ static Type *struct_decl(void) {
     TagScope *sc = find_tag(tag);
     if (!sc)
       error_tok(tag, "unknown struct type");
+    if (sc->ty->kind != TY_STRUCT)
+      error_tok(tag, "not a struct tag");
     return sc->ty;
   }
 
@@ -382,6 +390,50 @@ static Type *struct_decl(void) {
       ty->align = mem->ty->align;
   }
   ty->size = align_to(offset, ty->align);
+
+  if (tag)
+    push_tag_scope(tag, ty);
+  return ty;
+}
+
+static bool consume_end(void) {
+  Token *tok = token;
+  if (consume("}") || (consume(",") && consume("}")))
+    return true;
+  token = tok;
+  return false;
+}
+
+static Type *enum_specifier(void) {
+  expect("enum");
+  Type *ty = enum_type();
+
+  Token *tag = consume_ident();
+  if (tag && !peek("{")) {
+    TagScope *sc = find_tag(tag);
+    if (!sc)
+      error_tok(tag, "unknown enum type");
+    if (sc->ty->kind != TY_ENUM)
+      error_tok(tag, "not an enum tag");
+    return sc->ty;
+  }
+
+  expect("{");
+
+  int cnt = 0;
+  for (;;) {
+    char *name = expect_ident();
+    if (consume("="))
+      cnt = expect_number();
+
+    VarScope *sc = push_scope(name);
+    sc->enum_ty = ty;
+    sc->enum_val = cnt++;
+
+    if (consume_end())
+      break;
+    expect(",");
+  }
 
   if (tag)
     push_tag_scope(tag, ty);
@@ -516,8 +568,8 @@ static Node *read_expr_stmt(void) {
 
 static bool is_typename(void) {
   return peek("void") || peek("_Bool") || peek("char") || peek("short") ||
-         peek("int") || peek("long") || peek("struct") || peek("typedef") ||
-         find_typedef(token);
+         peek("int") || peek("long") || peek("enum") || peek("struct") ||
+         peek("typedef") || find_typedef(token);
 }
 
 static Node *stmt(void) {
@@ -856,8 +908,13 @@ static Node *primary(void) {
     }
 
     VarScope *sc = find_var(tok);
-    if (sc && sc->var)
-      return new_var_node(sc->var, tok);
+    if (sc) {
+      if (sc->var)
+        return new_var_node(sc->var, tok);
+      if (sc->enum_ty)
+        return new_num(sc->enum_val, tok);
+    }
+    return new_var_node(sc->var, tok);
     error_tok(tok, "undefined variable");
   }
 
