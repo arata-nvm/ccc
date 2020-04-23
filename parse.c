@@ -166,6 +166,9 @@ static Node *stmt(void);
 static Node *stmt2(void);
 static Node *expr(void);
 static Node *assign(void);
+static Node *bitand(void);
+static Node * bitor (void);
+static Node *bitxor(void);
 static Node *equality(void);
 static Node *relational(void);
 static Node *add(void);
@@ -683,7 +686,7 @@ static Node *expr(void) {
 }
 
 static Node *assign(void) {
-  Node *node = equality();
+  Node *node = bitor ();
   Token *tok;
   if (tok = consume("="))
     return new_binary(ND_ASSIGN, node, assign(), tok);
@@ -710,6 +713,30 @@ static Node *assign(void) {
       return new_binary(ND_SUB_EQ, node, assign(), tok);
   }
 
+  return node;
+}
+
+static Node * bitor (void) {
+  Node *node = bitxor();
+  Token *tok;
+  while (tok = consume("|"))
+    node = new_binary(ND_BITOR, node, bitxor(), tok);
+  return node;
+}
+
+static Node *bitxor(void) {
+  Node *node = bitand();
+  Token *tok;
+  while (tok = consume("^"))
+    node = new_binary(ND_BITXOR, node, bitxor(), tok);
+  return node;
+}
+
+static Node *bitand(void) {
+  Node *node = equality();
+  Token *tok;
+  while (tok = consume("&"))
+    node = new_binary(ND_BITAND, node, equality(), tok);
   return node;
 }
 
