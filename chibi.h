@@ -110,6 +110,7 @@ typedef enum {
   ND_WHILE,
   ND_FOR,
   ND_BLOCK,
+  ND_BREAK,
   ND_FUNCALL,
   ND_EXPR_STMT,
   ND_STMT_EXPR,
