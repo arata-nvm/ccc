@@ -33,6 +33,8 @@ static VarScope *var_scope;
 static TagScope *tag_scope;
 static int scope_depth;
 
+static Node *current_switch;
+
 static Scope *enter_scope(void) {
   Scope *sc = calloc(1, sizeof(Scope));
   sc->var_scope = var_scope;
@@ -656,6 +658,42 @@ static Node *stmt2(void) {
     node->then = stmt();
     if (consume("else"))
       node->els = stmt();
+    return node;
+  }
+
+  if (tok = consume("switch")) {
+    Node *node = new_node(ND_SWITCH, tok);
+    expect("(");
+    node->cond = expr();
+    expect(")");
+
+    Node *sw = current_switch;
+    current_switch = node;
+    node->then = stmt();
+    current_switch = sw;
+    return node;
+  }
+
+  if (tok = consume("case")) {
+    if (!current_switch)
+      error_tok(tok, "stray case");
+    int val = expect_number();
+    expect(":");
+
+    Node *node = new_unary(ND_CASE, stmt(), tok);
+    node->val = val;
+    node->case_next = current_switch->case_next;
+    current_switch->case_next = node;
+    return node;
+  }
+
+  if (tok = consume("default")) {
+    if (!current_switch)
+      error_tok(tok, "stray default");
+    expect(":");
+
+    Node *node = new_unary(ND_CASE, stmt(), tok);
+    current_switch->default_case = node;
     return node;
   }
 

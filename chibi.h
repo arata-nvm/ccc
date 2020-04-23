@@ -109,6 +109,8 @@ typedef enum {
   ND_IF,
   ND_WHILE,
   ND_FOR,
+  ND_SWITCH,
+  ND_CASE,
   ND_BLOCK,
   ND_BREAK,
   ND_CONTINUE,
@@ -148,7 +150,13 @@ struct Node {
 
   char *label_name;
 
+  Node *case_next;
+  Node *default_case;
+  int case_label;
+  int case_end_label;
+
   Var *var;
+
   long val;
 };
 
