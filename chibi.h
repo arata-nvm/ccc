@@ -112,6 +112,8 @@ typedef enum {
   ND_BLOCK,
   ND_BREAK,
   ND_CONTINUE,
+  ND_GOTO,
+  ND_LABEL,
   ND_FUNCALL,
   ND_EXPR_STMT,
   ND_STMT_EXPR,
@@ -143,6 +145,8 @@ struct Node {
 
   char *funcname;
   Node *args;
+
+  char *label_name;
 
   Var *var;
   long val;
