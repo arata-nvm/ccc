@@ -351,10 +351,23 @@ static Type *abstract_declarator(Type *ty) {
 static Type *type_suffix(Type *ty) {
   if (!consume("["))
     return ty;
-  int sz = expect_number();
-  expect("]");
+
+  int sz = 0;
+  bool is_incomplete = true;
+  if (!consume("]")) {
+    sz = expect_number();
+    is_incomplete = false;
+    expect("]");
+  }
+
+  Token *tok = token;
   ty = type_suffix(ty);
-  return array_of(ty, sz);
+  if (ty->is_incomplete)
+    error_tok(tok, "incomplete element type");
+
+  ty = array_of(ty, sz);
+  ty->is_incomplete = is_incomplete;
+  return ty;
 }
 
 static Type *type_name(void) {

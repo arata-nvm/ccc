@@ -185,6 +185,8 @@ struct Type {
   TypeKind kind;
   int size;
   int align;
+  bool is_incomplete;
+
   Type *base;
   int array_len;
   Member *members;
@@ -194,6 +196,7 @@ struct Type {
 struct  Member {
   Member *next;
   Type *ty;
+  Token *tok;
   char *name;
   int offset;
 };
