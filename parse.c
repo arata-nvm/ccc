@@ -716,6 +716,11 @@ static Node *stmt2(void) {
     return new_node(ND_BREAK, tok);
   }
 
+  if (tok = consume("continue")) {
+    expect(";");
+    return new_node(ND_CONTINUE, tok);
+  }
+
   if (is_typename())
     return declaration();
 
