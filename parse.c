@@ -489,6 +489,9 @@ static VarList *read_func_param(void) {
   ty = declarator(ty, &name);
   ty = type_suffix(ty);
 
+  if (ty->kind == TY_ARRAY)
+    ty = pointer_to(ty->base);
+
   VarList *vl = calloc(1, sizeof(VarList));
   vl->var = new_lvar(name, ty);
   return vl;
