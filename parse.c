@@ -830,6 +830,8 @@ static Node *unary(void) {
     return new_unary(ND_DEREF, cast(), tok);
   if (tok = consume("!"))
     return new_unary(ND_NOT, cast(), tok);
+  if (tok = consume("~"))
+    return new_unary(ND_BITNOT, cast(), tok);
   if (tok = consume("++"))
     return new_unary(ND_PRE_INC, unary(), tok);
   if (tok = consume("--"))
