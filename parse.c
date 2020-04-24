@@ -547,6 +547,11 @@ static VarList *read_func_params(void) {
   if (consume(")"))
     return NULL;
 
+  Token *tok = token;
+  if (consume("void") && consume(")"))
+    return NULL;
+  token = tok;
+
   VarList *head = read_func_param();
   VarList *cur = head;
 
@@ -726,7 +731,8 @@ static Initializer *gvar_initializer2(Initializer *cur, Type *ty) {
   long addend = eval2(expr, &var);
 
   if (var) {
-    int scale = (var->ty->kind == TY_ARRAY) ? var->ty->base->size : var->ty->size;
+    int scale =
+        (var->ty->kind == TY_ARRAY) ? var->ty->base->size : var->ty->size;
     return new_init_label(cur, var->name, addend * scale);
   }
 
@@ -1106,9 +1112,7 @@ static Node *expr(void) {
   return node;
 }
 
-static long eval(Node *node) {
-  return eval2(node, NULL);
-}
+static long eval(Node *node) { return eval2(node, NULL); }
 
 static long eval2(Node *node, Var **var) {
   switch (node->kind) {
