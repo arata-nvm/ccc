@@ -89,6 +89,7 @@ typedef enum {
   ND_LT,
   ND_LE,
   ND_ASSIGN,
+  ND_TERNARY,
   ND_PRE_INC,
   ND_PRE_DEC,
   ND_POST_INC,
