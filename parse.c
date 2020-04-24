@@ -173,6 +173,7 @@ static bool is_typename(void);
 static Node *stmt(void);
 static Node *stmt2(void);
 static Node *expr(void);
+static long const_expr(void);
 static Node *assign(void);
 static Node *conditional(void);
 static Node *logor(void);
@@ -365,7 +366,7 @@ static Type *type_suffix(Type *ty) {
   int sz = 0;
   bool is_incomplete = true;
   if (!consume("]")) {
-    sz = expect_number();
+    sz = const_expr();
     is_incomplete = false;
     expect("]");
   }
@@ -484,7 +485,7 @@ static Type *enum_specifier(void) {
   for (;;) {
     char *name = expect_ident();
     if (consume("="))
-      cnt = expect_number();
+      cnt = const_expr();
 
     VarScope *sc = push_scope(name);
     sc->enum_ty = ty;
@@ -679,7 +680,7 @@ static Node *stmt2(void) {
   if (tok = consume("case")) {
     if (!current_switch)
       error_tok(tok, "stray case");
-    int val = expect_number();
+    int val = const_expr();
     expect(":");
 
     Node *node = new_unary(ND_CASE, stmt(), tok);
@@ -794,6 +795,55 @@ static Node *expr(void) {
   }
   return node;
 }
+
+static long eval(Node *node) {
+  switch (node->kind) {
+  case ND_ADD:
+    return eval(node->lhs) + eval(node->rhs);
+  case ND_SUB:
+    return eval(node->lhs) - eval(node->rhs);
+  case ND_MUL:
+    return eval(node->lhs) * eval(node->rhs);
+  case ND_DIV:
+    return eval(node->lhs) / eval(node->rhs);
+  case ND_BITAND:
+    return eval(node->lhs) & eval(node->rhs);
+  case ND_BITOR:
+    return eval(node->lhs) | eval(node->rhs);
+  case ND_BITXOR:
+    return eval(node->lhs) | eval(node->rhs);
+  case ND_SHL:
+    return eval(node->lhs) << eval(node->rhs);
+  case ND_SHR:
+    return eval(node->lhs) >> eval(node->rhs);
+  case ND_EQ:
+    return eval(node->lhs) == eval(node->rhs);
+  case ND_NE:
+    return eval(node->lhs) != eval(node->rhs);
+  case ND_LT:
+    return eval(node->lhs) < eval(node->rhs);
+  case ND_LE:
+    return eval(node->lhs) <= eval(node->rhs);
+  case ND_TERNARY:
+    return eval(node->cond) ? eval(node->then) : eval(node->els);
+  case ND_COMMA:
+    return eval(node->rhs);
+  case ND_NOT:
+    return !eval(node->lhs);
+  case ND_BITNOT:
+    return ~eval(node->lhs);
+  case ND_LOGAND:
+    return eval(node->lhs) && eval(node->rhs);
+  case ND_LOGOR:
+    return eval(node->lhs) || eval(node->rhs);
+  case ND_NUM:
+    return node->val;
+  }
+
+  error_tok(node->tok, "not a constant expression");
+}
+
+static long const_expr(void) { return eval(conditional()); }
 
 static Node *assign(void) {
   Node *node = conditional();
