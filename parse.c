@@ -644,6 +644,27 @@ static Node *lvar_init_zero(Node *cur, Var *var, Type *ty, Designator *desg) {
 
 static Node *lvar_initializer2(Node *cur, Var *var, Type *ty,
                                Designator *desg) {
+  if (ty->kind == TY_ARRAY && ty->base->kind == TY_CHAR &&
+      token->kind == TK_STR) {
+    Token *tok = token;
+    token = token->next;
+
+    int len = (ty->array_len < tok->cont_len) ? ty->array_len : tok->cont_len;
+
+    for (int i = 0; i < len; i++) {
+      Designator desg2 = {desg, i};
+      Node *rhs = new_num(tok->contents[i], tok);
+      cur->next = new_desg_node(var, &desg2, rhs);
+      cur = cur->next;
+    }
+
+    for (int i = len; i < ty->array_len; i++) {
+      Designator desg2 = {desg, i};
+      cur = lvar_init_zero(cur, var, ty->base, &desg2);
+    }
+    return cur;
+  }
+
   if (ty->kind == TY_ARRAY) {
     expect("{");
     int i = 0;
