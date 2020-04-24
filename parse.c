@@ -174,6 +174,7 @@ static Node *stmt(void);
 static Node *stmt2(void);
 static Node *expr(void);
 static long eval(Node *node);
+static long eval2(Node *node, Var **var);
 static long const_expr(void);
 static Node *assign(void);
 static Node *conditional(void);
@@ -603,9 +604,10 @@ static Initializer *new_init_val(Initializer *cur, int sz, int val) {
   return init;
 }
 
-static Initializer *new_init_label(Initializer *cur, char *label) {
+static Initializer *new_init_label(Initializer *cur, char *label, long addend) {
   Initializer *init = calloc(1, sizeof(Initializer));
   init->label = label;
+  init->addend = addend;
   cur->next = init;
   return init;
 }
@@ -720,16 +722,15 @@ static Initializer *gvar_initializer2(Initializer *cur, Type *ty) {
   if (open)
     expect_end();
 
-  if (expr->kind == ND_ADDR) {
-    if (expr->lhs->kind != ND_VAR)
-      error_tok(tok, "invalid initializer");
-    return new_init_label(cur, expr->lhs->var->name);
+  Var *var = NULL;
+  long addend = eval2(expr, &var);
+
+  if (var) {
+    int scale = (var->ty->kind == TY_ARRAY) ? var->ty->base->size : var->ty->size;
+    return new_init_label(cur, var->name, addend * scale);
   }
 
-  if (expr->kind == ND_VAR && expr->var->ty->kind == TY_ARRAY)
-    return new_init_label(cur, expr->var->name);
-
-  return new_init_val(cur, ty->size, eval(expr));
+  return new_init_val(cur, ty->size, addend);
 }
 
 static Initializer *gvar_initializer(Type *ty) {
@@ -1106,11 +1107,21 @@ static Node *expr(void) {
 }
 
 static long eval(Node *node) {
+  return eval2(node, NULL);
+}
+
+static long eval2(Node *node, Var **var) {
   switch (node->kind) {
   case ND_ADD:
     return eval(node->lhs) + eval(node->rhs);
+  case ND_PTR_ADD:
+    return eval2(node->lhs, var) + eval(node->rhs);
   case ND_SUB:
     return eval(node->lhs) - eval(node->rhs);
+  case ND_PTR_SUB:
+    return eval2(node->lhs, var) - eval(node->rhs);
+  case ND_PTR_DIFF:
+    return eval2(node->lhs, var) - eval2(node->rhs, var);
   case ND_MUL:
     return eval(node->lhs) * eval(node->rhs);
   case ND_DIV:
@@ -1147,6 +1158,16 @@ static long eval(Node *node) {
     return eval(node->lhs) || eval(node->rhs);
   case ND_NUM:
     return node->val;
+  case ND_ADDR:
+    if (!var || *var || node->lhs->kind != ND_VAR)
+      error_tok(node->tok, "invalid initializer");
+    *var = node->lhs->var;
+    return 0;
+  case ND_VAR:
+    if (!var || *var || node->var->ty->kind != TY_ARRAY)
+      error_tok(node->tok, "invalid initializer");
+    *var = node->var;
+    return 0;
   }
 
   error_tok(node->tok, "not a constant expression");

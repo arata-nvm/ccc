@@ -173,6 +173,7 @@ struct Initializer {
   long val;
 
   char *label;
+  long addend;
 };
 
 typedef struct Function Function;
