@@ -631,6 +631,25 @@ static Initializer *emit_struct_padding(Initializer *cur, Type *parent,
   return new_init_zero(cur, end - start);
 }
 
+static void skip_excess_elements2(void) {
+  for (;;) {
+    if (consume("{"))
+      skip_excess_elements2();
+    else
+      assign();
+
+    if (consume_end())
+      return;
+    expect(",");
+  }
+}
+
+static void skip_excess_elements(void) {
+  expect(",");
+  warn_tok(token, "excess elements in initializer");
+  skip_excess_elements2();
+}
+
 static Initializer *gvar_initializer2(Initializer *cur, Type *ty) {
   Token *tok = token;
 
@@ -646,8 +665,8 @@ static Initializer *gvar_initializer2(Initializer *cur, Type *ty) {
       } while (i < limit && !peek_end() && consume(","));
     }
 
-    if (open)
-      expect_end();
+    if (open && !consume_end())
+      skip_excess_elements();
 
     cur = new_init_zero(cur, ty->base->size * (ty->array_len - i));
 
@@ -670,8 +689,9 @@ static Initializer *gvar_initializer2(Initializer *cur, Type *ty) {
         mem = mem->next;
       } while (mem && !peek_end() && consume(","));
     }
-    if (open)
-      expect_end();
+
+    if (open && !consume_end())
+      skip_excess_elements();
 
     if (mem)
       cur = new_init_zero(cur, ty->size - mem->offset);
@@ -811,8 +831,8 @@ static Node *lvar_initializer2(Node *cur, Var *var, Type *ty,
       } while (i < limit && !peek_end() && consume(","));
     }
 
-    if (open)
-      expect_end();
+    if (open && !consume_end())
+      skip_excess_elements();
 
     while (i < ty->array_len) {
       Designator desg2 = {desg, i++};
@@ -839,8 +859,8 @@ static Node *lvar_initializer2(Node *cur, Var *var, Type *ty,
       } while (mem && !peek_end() && consume(","));
     }
 
-    if (open)
-      expect_end();
+    if (open && !consume_end())
+      skip_excess_elements();
 
     for (; mem; mem = mem->next) {
       Designator desg2 = {desg, 0, mem};
