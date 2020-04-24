@@ -598,9 +598,13 @@ static void global_var(void) {
   StorageClass sclass;
   Type *ty = basetype(&sclass);
   char *name = NULL;
+  Token *tok = token;
   ty = declarator(ty, &name);
   ty = type_suffix(ty);
   expect(";");
+
+  if (ty->is_incomplete)
+    error_tok(tok, "incomplete type");
 
   if (sclass == TYPEDEF)
     push_scope(name)->type_def = ty;
@@ -649,6 +653,12 @@ static Node *lvar_initializer2(Node *cur, Var *var, Type *ty,
     Token *tok = token;
     token = token->next;
 
+    if (ty->is_incomplete) {
+      ty->size = tok->cont_len;
+      ty->array_len = tok->cont_len;
+      ty->is_incomplete = false;
+    }
+
     int len = (ty->array_len < tok->cont_len) ? ty->array_len : tok->cont_len;
 
     for (int i = 0; i < len; i++) {
@@ -680,6 +690,12 @@ static Node *lvar_initializer2(Node *cur, Var *var, Type *ty,
     while (i < ty->array_len) {
       Designator desg2 = {desg, i++};
       cur = lvar_init_zero(cur, var, ty->base, &desg2);
+    }
+
+    if (ty->is_incomplete) {
+      ty->size = ty->base->size * i;
+      ty->array_len = i;
+      ty->is_incomplete = false;
     }
     return cur;
   }
@@ -717,8 +733,12 @@ static Node *declaration(void) {
     error_tok(tok, "variable declared void");
 
   Var *var = new_lvar(name, ty);
-  if (consume(";"))
+
+  if (consume(";")) {
+    if (ty->is_incomplete)
+      error_tok(tok, "incomplete type");
     return new_node(ND_NULL, tok);
+  }
 
   expect("=");
 
