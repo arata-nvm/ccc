@@ -629,18 +629,37 @@ static Node *new_desg_node(Var *var, Designator *desg, Node *rhs) {
   return new_unary(ND_EXPR_STMT, node, rhs->tok);
 }
 
+static Node *lvar_init_zero(Node *cur, Var *var, Type *ty, Designator *desg) {
+  if (ty->kind == TY_ARRAY) {
+    for (int i = 0; i < ty->array_len; i++) {
+      Designator desg2 = {desg, i++};
+      cur = lvar_init_zero(cur, var, ty->base, &desg2);
+    }
+    return cur;
+  }
+
+  cur->next = new_desg_node(var, desg, new_num(0, token));
+  return cur->next;
+}
+
 static Node *lvar_initializer2(Node *cur, Var *var, Type *ty,
                                Designator *desg) {
   if (ty->kind == TY_ARRAY) {
     expect("{");
     int i = 0;
 
-    do {
-      Designator desg2 = {desg, i++};
-      cur = lvar_initializer2(cur, var, ty->base, &desg2);
-    } while (!peek_end() && consume(","));
-
+    if (!peek("}")) {
+      do {
+        Designator desg2 = {desg, i++};
+        cur = lvar_initializer2(cur, var, ty->base, &desg2);
+      } while (!peek_end() && consume(","));
+    }
     expect_end();
+
+    while (i < ty->array_len) {
+      Designator desg2 = {desg, i++};
+      cur = lvar_init_zero(cur, var, ty->base, &desg2);
+    }
     return cur;
   }
 
