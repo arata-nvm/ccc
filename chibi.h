@@ -11,6 +11,7 @@
 
 typedef struct Type Type;
 typedef struct Member Member;
+typedef struct Initializer Initializer;
 
 // tokenize.c
 
@@ -61,8 +62,7 @@ struct Var {
 
   int offset;
 
-  char *contents;
-  int cont_len;
+  Initializer *initializer;
 };
 
 typedef struct VarList VarList;
@@ -163,6 +163,15 @@ struct Node {
   Var *var;
 
   long val;
+};
+
+struct Initializer {
+  Initializer *next;
+
+  int sz;
+  long val;
+
+  char *label;
 };
 
 typedef struct Function Function;
