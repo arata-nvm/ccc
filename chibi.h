@@ -119,6 +119,7 @@ typedef enum {
   ND_IF,
   ND_WHILE,
   ND_FOR,
+  ND_DO,
   ND_SWITCH,
   ND_CASE,
   ND_BLOCK,
