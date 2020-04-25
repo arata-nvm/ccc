@@ -27,7 +27,7 @@ int main(int argc, char **argv) {
   Program *prog = program();
 
   for (Function *fn = prog->fns; fn; fn = fn->next) {
-    int offset = 0;
+    int offset = fn->has_varargs ? 56 : 0;
     for (VarList *vl = fn->locals; vl; vl = vl->next) {
       Var *var = vl->var;
       offset = align_to(offset, var->ty->align);
