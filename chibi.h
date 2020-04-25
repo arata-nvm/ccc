@@ -29,6 +29,7 @@ struct Token {
   TokenKind kind;
   Token *next;
   int val;
+  Type *ty;
   char *str;
   int len;
 
@@ -44,7 +45,6 @@ Token *peek(char *s);
 Token *consume(char *op);
 Token *consume_ident(void);
 void expect(char *op);
-long expect_number(void);
 char *expect_ident(void);
 bool at_eof(void);
 Token *tokenize(void);
