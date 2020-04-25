@@ -7,7 +7,7 @@ static char *read_file(char *path) {
 
   int filemax = 10 * 1024 * 1024;
   char *buf = malloc(filemax);
-  int size = fread_unlocked(buf, 1, filemax - 2, fp);
+  int size = fread(buf, 1, filemax - 2, fp);
   if (!feof(fp))
     error("%s: file too large");
 
@@ -19,7 +19,7 @@ static char *read_file(char *path) {
 
 int main(int argc, char **argv) {
   if (argc != 2)
-    error("%s: invlid number of arguments\n", argv[0]);
+    error("%s: invalid number of arguments", argv[0]);
 
   filename = argv[1];
   user_input = read_file(argv[1]);

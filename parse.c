@@ -182,7 +182,7 @@ static Node *conditional(void);
 static Node *logor(void);
 static Node *logand(void);
 static Node *bitand(void);
-static Node * bitor (void);
+static Node *bitor(void);
 static Node *bitxor(void);
 static Node *equality(void);
 static Node *relational(void);
@@ -453,6 +453,9 @@ static Type *struct_decl(void) {
 
   int offset = 0;
   for (Member *mem = ty->members; mem; mem = mem->next) {
+    if (mem->ty->is_incomplete)
+      error_tok(mem->tok, "incomplete struct member");
+
     offset = align_to(offset, mem->ty->align);
     mem->offset = offset;
     offset += mem->ty->size;
@@ -524,6 +527,7 @@ static Type *enum_specifier(void) {
 
 static Member *struct_member(void) {
   Type *ty = basetype(NULL);
+  Token *tok = token;
   char *name = NULL;
   ty = declarator(ty, &name);
   ty = type_suffix(ty);
@@ -532,6 +536,7 @@ static Member *struct_member(void) {
   Member *mem = calloc(1, sizeof(Member));
   mem->name = name;
   mem->ty = ty;
+  mem->tok = tok;
   return mem;
 }
 
@@ -927,9 +932,10 @@ static Node *declaration(void) {
   Token *tok = token;
   StorageClass sclass;
   Type *ty = basetype(&sclass);
-  if (consume(";"))
+  if (tok = consume(";"))
     return new_node(ND_NULL, tok);
 
+  tok = token;
   char *name = NULL;
   ty = declarator(ty, &name);
   ty = type_suffix(ty);
@@ -991,7 +997,7 @@ static Node *stmt(void) {
 static Node *stmt2(void) {
   Token *tok;
   if (tok = consume("return")) {
-    if (tok = consume(";"))
+    if (consume(";"))
       return new_node(ND_RETURN, tok);
 
     Node *node = new_unary(ND_RETURN, expr(), tok);
@@ -1292,14 +1298,14 @@ static Node *logor(void) {
 }
 
 static Node *logand(void) {
-  Node *node = bitor ();
+  Node *node = bitor();
   Token *tok;
   while (tok = consume("&&"))
-    node = new_binary(ND_LOGAND, node, bitor (), tok);
+    node = new_binary(ND_LOGAND, node, bitor(), tok);
   return node;
 }
 
-static Node * bitor (void) {
+static Node *bitor(void) {
   Node *node = bitxor();
   Token *tok;
   while (tok = consume("|"))
@@ -1607,6 +1613,8 @@ static Node *primary(void) {
     if (consume("(")) {
       if (is_typename()) {
         Type *ty = type_name();
+        if (ty->is_incomplete)
+          error_tok(tok, "incomplete type");
         expect(")");
         return new_num(ty->size, tok);
       }
@@ -1615,6 +1623,8 @@ static Node *primary(void) {
 
     Node *node = unary();
     add_type(node);
+    if (node->ty->is_incomplete)
+      error_tok(node->tok, "incomplete type");
     return new_num(node->ty->size, tok);
   }
 
