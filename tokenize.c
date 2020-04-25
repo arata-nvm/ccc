@@ -89,7 +89,7 @@ void expect(char *s) {
 long expect_number(void) {
   if (token->kind != TK_NUM)
     error_tok(token, "expected a number");
-  int val = token->val;
+  long val = token->val;
   token = token->next;
   return val;
 }
@@ -139,11 +139,9 @@ static char *starts_with_reserved(char *p) {
   static char *ops[] = {"<<=", ">>=", "==", "!=", "<=", ">=", "->", "++", "--",
                         "<<",  ">>",  "+=", "-=", "*=", "/=", "&&", "||"};
 
-  for (int i = 0; i < sizeof(ops) / sizeof(*ops); i++) {
-    int len = strlen(ops[i]);
+  for (int i = 0; i < sizeof(ops) / sizeof(*ops); i++)
     if (startswith(p, ops[i]))
       return ops[i];
-  }
 
   return NULL;
 }

@@ -20,7 +20,7 @@ static void gen_addr(Node *node) {
 
     Var *var = node->var;
     if (var->is_local) {
-      printf("  lea rax, [rbp-%d]\n", node->var->offset);
+      printf("  lea rax, [rbp-%d]\n", var->offset);
       printf("  push rax\n");
     } else {
       printf("  push offset %s\n", var->name);
@@ -205,7 +205,7 @@ static void gen(Node *node) {
     if (node->val == (int)node->val) {
       printf("  push %ld\n", node->val);
     } else {
-      printf("  movabs rax, %ld", node->val);
+      printf("  movabs rax, %ld\n", node->val);
       printf("  push rax\n");
     }
     return;
@@ -543,14 +543,9 @@ static void emit_data(Program *prog) {
     printf(".align %d\n", var->ty->align);
     printf("%s:\n", var->name);
 
-    if (!var->initializer) {
-      printf("  .zero %d\n", var->ty->size);
-      continue;
-    }
-
     for (Initializer *init = var->initializer; init; init = init->next) {
       if (init->label)
-        printf("  .quad %s+%ld\n", init->label, init->addend);
+        printf("  .quad %s%+ld\n", init->label, init->addend);
       else if (init->sz == 1)
         printf("  .byte %ld\n", init->val);
       else
@@ -566,7 +561,7 @@ static void load_arg(Var *var, int idx) {
   else if (sz == 2)
     printf("  mov [rbp-%d], %s\n", var->offset, argreg2[idx]);
   else if (sz == 4)
-    printf("mov [rbp-%d], %s\n", var->offset, argreg4[idx]);
+    printf("  mov [rbp-%d], %s\n", var->offset, argreg4[idx]);
   else {
     assert(sz == 8);
     printf("  mov [rbp-%d], %s\n", var->offset, argreg8[idx]);

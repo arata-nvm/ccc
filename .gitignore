@@ -3,6 +3,7 @@
 tmp*
 a.out
 chibicc
+chibicc-gen*
 
 /.idea
 /cmake-build-debug

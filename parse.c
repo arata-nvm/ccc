@@ -50,10 +50,9 @@ static void leave_scope(Scope *sc) {
 }
 
 static VarScope *find_var(Token *tok) {
-  for (VarScope *sc = var_scope; sc; sc = sc->next) {
+  for (VarScope *sc = var_scope; sc; sc = sc->next)
     if (strlen(sc->name) == tok->len && !strncmp(tok->str, sc->name, tok->len))
       return sc;
-  }
   return NULL;
 }
 
@@ -297,8 +296,6 @@ static Type *basetype(StorageClass *sclass) {
 
     if (consume("void"))
       counter += VOID;
-    else if (consume("_Bool"))
-      counter += BOOL;
     else if (consume("_Bool"))
       counter += BOOL;
     else if (consume("char"))
@@ -771,7 +768,7 @@ static void global_var(void) {
     return;
   }
 
-  Var *var = new_gvar(name, ty, sclass != STATIC, sclass != EXTERN);
+  Var *var = new_gvar(name, ty, sclass == STATIC, sclass != EXTERN);
 
   if (sclass == EXTERN) {
     expect(";");
@@ -994,7 +991,7 @@ static Node *stmt(void) {
 static Node *stmt2(void) {
   Token *tok;
   if (tok = consume("return")) {
-    if (consume(";"))
+    if (tok = consume(";"))
       return new_node(ND_RETURN, tok);
 
     Node *node = new_unary(ND_RETURN, expr(), tok);
@@ -1634,7 +1631,6 @@ static Node *primary(void) {
       if (sc->enum_ty)
         return new_num(sc->enum_val, tok);
     }
-    return new_var_node(sc->var, tok);
     error_tok(tok, "undefined variable");
   }
 
