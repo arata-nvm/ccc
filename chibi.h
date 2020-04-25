@@ -63,6 +63,7 @@ struct Var {
 
   int offset;
 
+  bool is_static;
   Initializer *initializer;
 };
 
