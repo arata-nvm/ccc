@@ -182,7 +182,7 @@ static Node *conditional(void);
 static Node *logor(void);
 static Node *logand(void);
 static Node *bitand(void);
-static Node *bitor(void);
+static Node * bitor (void);
 static Node *bitxor(void);
 static Node *equality(void);
 static Node *relational(void);
@@ -1298,14 +1298,14 @@ static Node *logor(void) {
 }
 
 static Node *logand(void) {
-  Node *node = bitor();
+  Node *node = bitor ();
   Token *tok;
   while (tok = consume("&&"))
-    node = new_binary(ND_LOGAND, node, bitor(), tok);
+    node = new_binary(ND_LOGAND, node, bitor (), tok);
   return node;
 }
 
-static Node *bitor(void) {
+static Node * bitor (void) {
   Node *node = bitxor();
   Token *tok;
   while (tok = consume("|"))
