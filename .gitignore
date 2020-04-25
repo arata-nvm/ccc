@@ -2,8 +2,8 @@
 *.o
 tmp*
 a.out
-chibicc
-chibicc-gen*
+ccc
+ccc-gen*
 
 /.idea
 /cmake-build-debug

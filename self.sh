@@ -1,5 +1,6 @@
 #!/bin/bash -x
 TMP=tmp-self
+TARGET=ccc
 
 mkdir -p $TMP
 
@@ -53,7 +54,7 @@ EOF
     sed -i 's/\bNULL\b/0/g' $TMP/$1
     sed -i 's/INT_MAX/2147483647/g' $TMP/$1
 
-    ./chibicc $TMP/$1 > $TMP/${1%.c}.s
+    ./ccc $TMP/$1 > $TMP/${1%.c}.s
     gcc -c -o $TMP/${1%.c}.o $TMP/${1%.c}.s
 }
 
@@ -68,4 +69,4 @@ expand parse.c
 expand codegen.c
 expand tokenize.c
 
-gcc -static -o chibicc-gen2 $TMP/*.o
+gcc -static -o ccc-gen2 $TMP/*.o
